@@ -789,8 +789,33 @@ module Tag_Parser : TAG_PARSER = struct
                             ScmPair (ScmPair (ScmSymbol "let*",
                                               ScmPair (ribs, exprs)),
                                      ScmNil))))
-    | ScmPair (ScmSymbol "letrec", ScmPair (ribs, exprs)) ->
-       raise (X_not_yet_implemented "hw 1")
+    | ScmPair (ScmSymbol "letrec", ScmPair (ribs, exprs)) ->               (*   ScmPair (ScmSymbol "set!", ScmPair (var, ScmPair (expr, ScmNil))) *)
+      let ribs= match scheme_list_to_ocaml ribs with 
+      | (ribs1 , ScmNil) -> ribs1 
+      | _ -> raise ( X_this_should_not_happen "improper ribs structure!")   in
+      let vars= List.map 
+      (fun binding -> match binding with
+      | ScmPair( variable , _ ) -> variable
+      | _ -> raise ( X_this_should_not_happen "improper binding sexp! (variables)")) ribs in
+      let vars_sexp_list=  (List.fold_right (fun curr_var var_lst -> curr_var :: var_lst) vars [] ) in (* create a proper list of the variables in the lambda*)
+      let set_vars_sexps= (List.map 
+      (fun binding -> match binding with 
+      | ScmPair(variable, ScmPair( arg_val ,ScmNil)) -> ScmPair(ScmSymbol "set!" , ScmPair(variable, ScmPair(arg_val , ScmNil) ))
+      | _ -> raise ( X_this_should_not_happen "improper binding sexp!") ) ribs) in  
+      let rest_of_body_exps= match scheme_list_to_ocaml exprs with 
+      | (body_exps , ScmNil) -> body_exps
+      | _ ->  raise ( X_this_should_not_happen "improper body s-exprs structure!") in
+      let body_exps= scheme_sexpr_list_of_sexpr_list ( set_vars_sexps @  rest_of_body_exps) in
+      let print_body_exps=  print_sexpr Stdlib.stdout body_exps in
+      let begin_sexper= scheme_sexpr_list_of_sexpr_list ((ScmSymbol "begin") :: (set_vars_sexps @ rest_of_body_exps))  in
+      let print_begin_exp= print_sexpr Stdlib.stdout begin_sexper in
+      let body_exp= tag_parse begin_sexper in
+      let print_before_tag= print_endline "printing after tag parsing new body:" in
+      let vars_exps= List.map (fun var_sexp -> match var_sexp with (*turn lambda variabe sexps into exps*)
+                    | ScmSymbol sym -> sym
+                    | _ ->  raise ( X_this_should_not_happen "variable isn't a symbol!") ) vars      in
+      let final_exp= ScmApplic( ScmLambda(vars_exps, Simple, body_exp) , [] )  in
+      final_exp
     | ScmPair (ScmSymbol "and", ScmNil) -> tag_parse (ScmBoolean true)
     | ScmPair (ScmSymbol "and", exprs) ->
        (match (scheme_list_to_ocaml exprs) with
