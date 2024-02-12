@@ -42,6 +42,10 @@ let rec gcd a b =
         pow_negative x y 1.0
   end;;
 
+  module Stdlib = struct
+    let stdout = stdout
+  end;;
+
 type scm_number =
   | ScmInteger of int
   | ScmFraction of (int * int)
@@ -986,10 +990,17 @@ module type SEMANTIC_ANALYSIS = sig
   val annotate_tail_calls : expr' -> expr'
   val auto_box : expr' -> expr'
   val semantics : expr -> expr'  
+  val tag_lexical_address_for_var : string -> string list -> string list list -> var'
+  val lookup_in_rib : 'a -> 'a list -> int option
+  val lookup_in_env : 'a -> 'a list list -> (int * int) option
 end;; (* end of signature SEMANTIC_ANALYSIS *)
 
 module Semantic_Analysis : SEMANTIC_ANALYSIS = struct
 
+  (* Example:
+     Semantic_Analysis.lookup_in_rib 5 [2;5;1;3;5];;
+- : int option = Some 1
+ *)
   let rec lookup_in_rib name = function
     | [] -> None
     | name' :: rib ->
@@ -998,7 +1009,10 @@ module Semantic_Analysis : SEMANTIC_ANALYSIS = struct
        else (match (lookup_in_rib name rib) with
              | None -> None
              | Some minor -> Some (minor + 1));;
-
+ (* Example:
+    Semantic_Analysis.lookup_in_env 8 [[4;1;6]; [3] ; [2; 4; 8]];;
+- : (int * int) option = Some (2, 2)
+ *)
   let rec lookup_in_env name = function
     | [] -> None
     | rib :: env ->
@@ -1009,6 +1023,17 @@ module Semantic_Analysis : SEMANTIC_ANALYSIS = struct
             | Some(major, minor) -> Some(major + 1, minor))
         | Some minor -> Some(0, minor));;
 
+(*  Examples:
+
+Semantic_Analysis.tag_lexical_address_for_var "b" ["a"; "b";"c"] [["a";] ; ["b";]];;
+- : var' = Var' ("b", Param 1)
+
+Semantic_Analysis.tag_lexical_address_for_var "b" ["a"; "c"] [["a";] ; ["b";]];;
+- : var' = Var' ("b", Bound (1, 0)) 
+
+Semantic_Analysis.tag_lexical_address_for_var "b" ["a"; "c"] [["a";] ; ["d";] ;["c";]];;
+- : var' = Var' ("b", Free) 
+*)
   let tag_lexical_address_for_var name params env = 
     match (lookup_in_rib name params) with
     | None ->
@@ -1017,9 +1042,39 @@ module Semantic_Analysis : SEMANTIC_ANALYSIS = struct
         | Some(major, minor) -> Var' (name, Bound (major, minor)))
     | Some minor -> Var' (name, Param minor);;
 
+  let rec appendListToList acc subject = 
+    match acc with
+    | [] -> subject
+    | hd :: t1 -> hd :: (appendListToList t1 subject)
+  ;;
+
+  let rec map lis func = 
+    match lis with
+    | [] -> []
+    | ele :: rest -> (func ele) :: (map rest func)
+  ;;
+
   (* run this first *)
   let annotate_lexical_address pe =
-    raise (X_not_yet_implemented "hw 2")
+    let rec accumulateEnvironment expression params env = 
+      match expression with
+      | ScmConst(sexpr) -> ScmConst'(sexpr)
+      | ScmVarGet(Var(varName) as var) -> ScmVarGet'(tag_lexical_address_for_var varName params env)
+      | ScmIf(test, thenDo, elseDo) -> ScmIf'((accumulateEnvironment test params env) , (accumulateEnvironment thenDo params env), (accumulateEnvironment elseDo params env) )
+      | ScmSeq(exp_list) -> ScmSeq'(map exp_list (fun x -> accumulateEnvironment x params env))
+      | ScmOr(exp_list) -> ScmOr'(map exp_list (fun x -> accumulateEnvironment x params env))
+      | ScmVarSet(Var(varName) as var , exp) -> ScmVarSet'((tag_lexical_address_for_var varName params env) , (accumulateEnvironment exp params env))
+      | ScmVarDef(Var(varName) as var, exp) ->  ScmVarDef'((tag_lexical_address_for_var varName [] [[]]) , (accumulateEnvironment exp params env))
+      | ScmLambda(param_list, kind, exp) -> 
+          let ans = match kind with
+          | Simple -> ScmLambda'(param_list, kind, accumulateEnvironment exp param_list (params :: env))
+          | Opt(someString) -> raise (X_not_yet_implemented "lambda opt unimplemented yet")
+          | _ -> failwith "shouldnt happen" in
+           ans
+      | ScmApplic(exp, exp_list) -> ScmApplic'( (accumulateEnvironment exp params env), (map exp_list (fun x -> accumulateEnvironment x params env)), Non_Tail_Call)
+      | _ -> raise (X_not_yet_implemented "hw 2  shouldn't reach here") in
+
+    accumulateEnvironment pe [] [[]];;
 
   (* run this second *)
   let annotate_tail_calls pe = 
