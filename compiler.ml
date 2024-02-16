@@ -1075,11 +1075,61 @@ Semantic_Analysis.tag_lexical_address_for_var "b" ["a"; "c"] [["a";] ; ["d";] ;[
       | _ -> raise (X_not_yet_implemented "hw 2  shouldn't reach here") in
 
     accumulateEnvironment pe [] [[]];;
+(*commited in February 16th - tail-calls annotation*)
 
   (* run this second *)
-  let annotate_tail_calls pe = 
-    raise (X_not_yet_implemented "hw 2");;
+ 
+(* helper functions for annotate_tail_calls*)
 
+let rec all_but_last lst= match lst with
+| [] -> []
+| last :: [] -> []
+| car :: cdr ->  car :: (all_but_last cdr)
+      ;;
+
+let rec last_only lst= match lst with 
+|  last :: [] -> last
+| car :: cdr -> (last_only cdr)
+    ;;
+  (* run this second *)
+  let annotate_tail_calls pe = 
+    let rec annotate_tail_calls' in_tail_pos curr_exp= match curr_exp with
+    | ScmConst' const_exp ->  ScmConst' const_exp
+    | ScmVarGet' expr1 -> ScmVarGet' expr1 
+    | ScmIf' (test',then',else') -> ScmIf' ( (annotate_tail_calls' false else') , (annotate_tail_calls' in_tail_pos then') , (annotate_tail_calls' in_tail_pos else') )
+    | ScmOr' or_exprs ->  (match or_exprs with 
+        | [] -> ScmOr' or_exprs
+        | [first_or_exprs] -> ScmOr' [(annotate_tail_calls' in_tail_pos first_or_exprs)]
+        | many_or_exprs ->
+          let last_expr= (last_only many_or_exprs) in
+          let first_exprs= (all_but_last many_or_exprs) in
+          ScmOr' ( ( List.map (annotate_tail_calls' false) first_exprs) @ [(annotate_tail_calls' in_tail_pos last_expr)] ) (* only last OR expression is in tail pos!!*)
+        )
+    | ScmVarSet' (var,expr) -> ScmVarSet' (var, (annotate_tail_calls' false expr)) (* body is never in tail-pos, after it's execution there is a mov instruction*)
+    |  ScmVarDef' (var , expr) -> ScmVarDef' (var , (annotate_tail_calls' false expr)) (* same as above.. body never in tail-pos*)
+    | ScmBox' var -> ScmBox' var
+    | ScmBoxGet' var -> ScmBoxGet' var
+    | ScmBoxSet' (var,expr) -> ScmBoxSet' (var, (annotate_tail_calls' false expr)) (* same as above.. body never in tail-pos*)
+    | ScmLambda' (params, kind, body) -> ScmLambda'(params, kind, (annotate_tail_calls' true body)) (*  here is where we have to set the flag to true - for any applications inside the lambda body expr..  *)
+    | ScmApplic' (lambda_expr, args, Non_Tail_Call) -> 
+     (* let tail_annotated_args= List.map ()*)
+      let in_tail= in_tail_pos in
+      (match in_tail with 
+      | true -> ScmApplic'( ( annotate_tail_calls' in_tail_pos lambda_expr) , args , Tail_Call) (*if in tail pos - then it's a tail call!*)
+      | false -> ScmApplic'( ( annotate_tail_calls' in_tail_pos lambda_expr) ,  args , Non_Tail_Call) (*otherwise not a tail call!*)
+      )
+    | ScmSeq' seq_of_exprs ->  (match seq_of_exprs with
+        | [] -> ScmSeq' []
+        | [expr] -> ScmSeq' [(annotate_tail_calls' in_tail_pos expr)]
+        | exprs_list -> 
+          let last_expr= (last_only exprs_list) in
+          let first_exprs= (all_but_last exprs_list) in
+          ScmSeq'( (List.map (annotate_tail_calls' false) first_exprs) @  [(annotate_tail_calls' in_tail_pos last_expr)] )
+                                )
+      
+      in (annotate_tail_calls' false pe)
+    
+          ;;
   (* auto_box *)
 
   let copy_list = List.map (fun si -> si);;
