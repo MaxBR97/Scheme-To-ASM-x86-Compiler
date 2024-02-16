@@ -1096,7 +1096,7 @@ let rec last_only lst= match lst with
     let rec annotate_tail_calls' in_tail_pos curr_exp= match curr_exp with
     | ScmConst' const_exp ->  ScmConst' const_exp
     | ScmVarGet' expr1 -> ScmVarGet' expr1 
-    | ScmIf' (test',then',else') -> ScmIf' ( (annotate_tail_calls' false else') , (annotate_tail_calls' in_tail_pos then') , (annotate_tail_calls' in_tail_pos else') )
+    | ScmIf' (test',then',else') -> ScmIf' ( (annotate_tail_calls' false test') , (annotate_tail_calls' in_tail_pos then') , (annotate_tail_calls' in_tail_pos else') )
     | ScmOr' or_exprs ->  (match or_exprs with 
         | [] -> ScmOr' or_exprs
         | [first_or_exprs] -> ScmOr' [(annotate_tail_calls' in_tail_pos first_or_exprs)]
