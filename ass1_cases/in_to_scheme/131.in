@@ -1,0 +1,1 @@
+(string-append "14 = " (format "~a" (+ 14 2)))

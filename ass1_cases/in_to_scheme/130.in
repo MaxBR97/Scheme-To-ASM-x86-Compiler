@@ -1,0 +1,1 @@
+(string-append "the awnser to life the universe and everything " (format "~a" (* 7 6)))

@@ -1476,6 +1476,18 @@ module type CODE_GENERATION =
     val compile_scheme_string : string -> string -> unit
     val compile_scheme_file : string -> string -> unit
     val compile_and_run_scheme_string : string -> string -> unit
+    val global_bindings_table : (string * string) list
+    val list_and_last: 'a list -> ('a list * 'a) option
+    val collect_constants: expr' list -> sexpr list
+    val add_sub_constants : sexpr list -> sexpr list
+    val search_constant_address : sexpr -> (sexpr * 'a * 'b) list -> 'a
+    type initialized_data
+    val const_repr : sexpr -> 'a -> (sexpr * int * 'b) list -> initialized_data list * int
+    val make_constants_table :  expr' list -> (sexpr * int * initialized_data list) list
+    val asm_comment_of_sexpr : sexpr -> string
+    val asm_of_representation : sexpr -> initialized_data list -> string
+    val asm_of_constants_table : (sexpr * int * initialized_data list) list -> string
+    val collect_free_vars : 'a -> 'b
   end;;
 
 module Code_Generation : CODE_GENERATION = struct
