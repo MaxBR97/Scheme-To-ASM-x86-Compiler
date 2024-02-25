@@ -1920,7 +1920,7 @@ module Code_Generation : CODE_GENERATION = struct
           let label_else = (make_if_else ()) in
           let label_exit = (make_if_end ()) in
            (run params env test)
-          ^ (Printf.sprintf "\ncmp rax, %s" (search_constant_address (ScmBoolean false) consts) )
+          ^ (Printf.sprintf "\ncmp rax, L_constants + %d" (search_constant_address (ScmBoolean false) consts) )
           ^ (Printf.sprintf "\nje %s;\n" label_else)
           ^ (run params env dit)
           ^ (Printf.sprintf "\njmp %s;\n" label_exit)
@@ -1953,11 +1953,21 @@ module Code_Generation : CODE_GENERATION = struct
             | None -> run params env (ScmConst' (ScmBoolean false)))
          in asm_code
       | ScmVarSet' (Var' (v, Free), expr') ->
-         raise (X_not_yet_implemented "final project")
+         let valToSet = (run params env expr') in
+         let mov1 = (Printf.sprintf "\nmov qword [%s], rax\n"  (search_free_var_table v free_vars)) in
+         let mov2 = (Printf.sprintf "mov rax, L_constants + %d\n" (search_constant_address (ScmVoid) consts) ) in
+         (valToSet ^ mov1 ^ mov2)
       | ScmVarSet' (Var' (v, Param minor), ScmBox' _) ->
          raise (X_not_yet_implemented "final project")
       | ScmVarSet' (Var' (v, Param minor), expr') ->
-         raise (X_not_yet_implemented "final project")
+         let valToSet = (run params env expr') in
+         let mov1 = (Printf.sprintf "\nmov qword rcx, %d" minor) in
+         let mov2 = (Printf.sprintf "\nmov qword rbx 4\n" ) in
+         let mov3 = (Printf.sprintf "\nmov qword rbx, rcx + rbx \n" ) in
+         let mov4 = (Printf.sprintf "\nmov qword rbx, rbx * 8 + rbp \n" ) in
+         let mov5 = (Printf.sprintf "\nmov qword [rbx], rax\n" ) in
+         let mov6 = (Printf.sprintf "mov rax, L_constants + %d\n" (search_constant_address (ScmVoid) consts) ) in
+         (valToSet ^ mov1 ^ mov2 ^ mov3 ^ mov4 ^ mov5 ^ mov6)
       | ScmVarSet' (Var' (v, Bound (major, minor)), expr') ->
          raise (X_not_yet_implemented "final project")
       | ScmVarDef' (Var' (v, Free), expr') ->
@@ -2039,7 +2049,29 @@ module Code_Generation : CODE_GENERATION = struct
       | ScmLambda' (params', Opt opt, body) ->
          raise (X_not_yet_implemented "final project")
       | ScmApplic' (proc, args, Non_Tail_Call) -> 
-         raise (X_not_yet_implemented "final project")
+        let rec func argzzz = 
+          match argzzz with 
+          | [] -> ""
+          | first :: rest -> 
+            let argument = "\n" ^ (run params env first) in
+            let push = (Printf.sprintf "push rax\n") in
+            (func rest) ^ (argument ^ push)
+          | _ -> raise (X_not_yet_implemented "bad (ScmApplic code generation)") in
+            let closureGen = (run params env proc)  in
+            let arg_count = List.length args in
+          
+           (func args) 
+          ^ (Printf.sprintf "\npush %d\n" arg_count) 
+          ^ closureGen 
+          ^(Printf.sprintf "\npush qword rax\n")
+          ^(Printf.sprintf "add rax , 1\n") 
+          ^(Printf.sprintf "call rax\n")
+          ^(Printf.sprintf "mov rcx, 8\n")
+          ^(Printf.sprintf "mul rcx, %d \n" arg_count)
+          ^ (Printf.sprintf "add rsp, rcx\n") 
+          
+
+         (* raise (X_not_yet_implemented "final project (applic non tail call)") *)
       | ScmApplic' (proc, args, Tail_Call) -> 
          let args_code =
            String.concat ""
