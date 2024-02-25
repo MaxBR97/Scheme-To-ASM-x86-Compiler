@@ -1487,7 +1487,10 @@ module type CODE_GENERATION =
     val asm_comment_of_sexpr : sexpr -> string
     val asm_of_representation : sexpr -> initialized_data list -> string
     val asm_of_constants_table : (sexpr * int * initialized_data list) list -> string
-    val collect_free_vars : 'a -> 'b
+    val collect_free_vars : expr' list -> string list
+    val make_free_vars_table: expr' list -> (string * string) list
+    val make_if_else : unit ->string
+    val code_gen : expr' list -> string
   end;;
 
 module Code_Generation : CODE_GENERATION = struct
@@ -1769,7 +1772,34 @@ module Code_Generation : CODE_GENERATION = struct
       label_start_of_constants_table (run table);;
 
   let collect_free_vars pe =
-    raise (X_not_yet_implemented "final project");;
+    let rec run = function
+    | ScmVarGet' (Var' (v, Free)) -> [v] 
+    | ScmVarGet' _ -> []
+    | ScmBox' (Var' (v, Free)) -> [v]  
+    | ScmBox' _ -> []
+    | ScmBoxGet' (Var' (v, Free)) -> [v]
+    | ScmBoxGet' _ -> []
+    | ScmConst' sexpr -> []
+    | ScmIf' (test, dit, dif) ->
+       (run test) @ (run dit) @ (run dif)
+    | ScmSeq' exprs' -> runs exprs'
+    | ScmOr' exprs' -> runs exprs'
+    | ScmVarDef' (Var' (v, Free), expr') 
+      | ScmVarSet' (Var' (v, Free), expr') ->
+       (v) :: (run expr')
+    | ScmVarSet' (_, expr') 
+      | ScmVarDef' (_, expr') 
+      | ScmBoxSet' (_, expr') 
+      | ScmLambda' (_, _, expr') -> run expr'
+    | ScmApplic' (expr', exprs', _) -> (run expr') @ (runs exprs')
+    and runs exprs' =
+      List.fold_left (fun consts expr' -> consts @ (run expr')) [] exprs'
+    in
+    (List.map
+         (fun (scm_name, _) -> scm_name)
+         global_bindings_table)
+      @ (remove_duplicates (runs pe));;
+    
 
   let make_free_vars_table =
     let rec run index = function
@@ -1887,7 +1917,17 @@ module Code_Generation : CODE_GENERATION = struct
          ^ (Printf.sprintf
               "\tmov rax, qword [rax + 8 * %d]\t; bound var %s\n" minor v)
       | ScmIf' (test, dit, dif) ->
-         raise (X_not_yet_implemented "final project")
+          let label_else = (make_if_else ()) in
+          let label_exit = (make_if_end ()) in
+           (run params env test)
+          ^ (Printf.sprintf "\ncmp rax, %s" (search_constant_address (ScmBoolean false) consts) )
+          ^ (Printf.sprintf "\nje %s;\n" label_else)
+          ^ (run params env dit)
+          ^ (Printf.sprintf "\njmp %s;\n" label_exit)
+          ^ (Printf.sprintf "%s:\n" label_else)
+          ^ (run params env dif)
+          ^ (Printf.sprintf "\n%s:\n" label_exit)
+         (* raise (X_not_yet_implemented "final project") *)
       | ScmSeq' exprs' ->
          String.concat "\n"
            (List.map (run params env) exprs')
@@ -2081,10 +2121,10 @@ module Code_Generation : CODE_GENERATION = struct
 
   let compile_scheme_file file_in file_out =
     compile_scheme_string file_out (file_to_string file_in);;
-
+ (* to auto-test, call the output file "output" !! *)
   let compile_and_run_scheme_string file_out_base user =
-    let init = file_to_string "init.scm" in
-    let source_code = init ^ user in
+    (* let init = file_to_string "init.scm" in *)
+    let source_code = (*init ^*) user in
     let sexprs = (PC.star Reader.nt_sexpr source_code 0).found in
     let exprs = List.map Tag_Parser.tag_parse sexprs in
     let exprs' = List.map Semantic_Analysis.semantics exprs in
@@ -2092,13 +2132,13 @@ module Code_Generation : CODE_GENERATION = struct
     ( string_to_file (Printf.sprintf "%s.asm" file_out_base) asm_code;
       match (Sys.command
                (Printf.sprintf
-                  "make -f testing/makefile %s" file_out_base)) with
-      | 0 -> let _ = Sys.command (Printf.sprintf "./%s" file_out_base) in ()
+                  "make %s" file_out_base )) with
+      | (*0*) _ -> let _ = Sys.command (Printf.sprintf "./%s" file_out_base) in ()
       | n -> (Printf.printf "!!! Failed with code %d\n" n; ()));;
 
 end;; (* end of Code_Generation struct *)
 
 (* end-of-input *)
 
-let test = Code_Generation.compile_and_run_scheme_string "testing/goo";;
+let test = Code_Generation.compile_and_run_scheme_string "output";;
 

@@ -53,6 +53,15 @@ pc: pc.ml
 compiler: compiler.ml
 	ocamlc -o compiler.o compiler.ml
 
+testing/makefile: output.o
+	gcc -g -m64 -no-pie -o output output.o ;\
+	rm output.o;\
+	./output;
+
+output.o: output.asm
+	nasm -g -f elf64 -l output.lst output.asm
+
 clean:
-	rm pc.o pc.cmi pc.cmo compiler.o compiler.cmi compiler.cmo
+	rm output.asm output.lst output.o output
+	pc.o pc.cmi pc.cmo compiler.o compiler.cmi compiler.cmo
 # end of input
