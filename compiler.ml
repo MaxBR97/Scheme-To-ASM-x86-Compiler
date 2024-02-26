@@ -1954,7 +1954,7 @@ module Code_Generation : CODE_GENERATION = struct
          in asm_code
       | ScmVarSet' (Var' (v, Free), expr') ->
          let valToSet = (run params env expr') in
-         let mov1 = (Printf.sprintf "\nmov qword [%s], rax\n"  (search_free_var_table v free_vars)) in
+         let mov1 = (Printf.sprintf "\nmov qword [%s], rax; ~~~\n"  (search_free_var_table v free_vars)) in
          let mov2 = (Printf.sprintf "mov rax, L_constants + %d\n" (search_constant_address (ScmVoid) consts) ) in
          (valToSet ^ mov1 ^ mov2)
       | ScmVarSet' (Var' (v, Param minor), ScmBox' _) ->
@@ -1965,7 +1965,7 @@ module Code_Generation : CODE_GENERATION = struct
          let mov2 = (Printf.sprintf "\nmov qword rbx 4\n" ) in
          let mov3 = (Printf.sprintf "\nmov qword rbx, rcx + rbx \n" ) in
          let mov4 = (Printf.sprintf "\nmov qword rbx, rbx * 8 + rbp \n" ) in
-         let mov5 = (Printf.sprintf "\nmov qword [rbx], rax\n" ) in
+         let mov5 = (Printf.sprintf "\nmov qword [rbx], rax ; ~~~!\n" ) in
          let mov6 = (Printf.sprintf "mov rax, L_constants + %d\n" (search_constant_address (ScmVoid) consts) ) in
          (valToSet ^ mov1 ^ mov2 ^ mov3 ^ mov4 ^ mov5 ^ mov6)
       | ScmVarSet' (Var' (v, Bound (major, minor)), expr') ->
@@ -2049,7 +2049,34 @@ module Code_Generation : CODE_GENERATION = struct
       | ScmLambda' (params', Opt opt, body) ->
          raise (X_not_yet_implemented "final project")
       | ScmApplic' (proc, args, Non_Tail_Call) -> 
-        let rec func argzzz = 
+        let args_code =
+          String.concat ""
+            (List.map
+               (fun arg ->
+                 let arg_code = run params env arg in
+                 arg_code
+                 ^ "\tpush rax\n")
+               (List.rev args))
+        and proc_code = run params env proc
+        and label_recycle_frame_loop =
+          make_tc_applic_recycle_frame_loop ()
+        and label_recycle_frame_done =
+          make_tc_applic_recycle_frame_done ()
+        in
+        "\t; preparing a non tail-call\n"
+        ^ args_code
+        ^ (Printf.sprintf "\tpush %d\t;--- arg count\n" (List.length args))
+        ^ proc_code
+        ^ "\tcmp byte [rax], T_closure\n"
+        ^ "\tjne L_error_non_closure\n"
+        ^ "\tpush SOB_CLOSURE_ENV(rax)\n\n"
+        ^ "\tjmp SOB_CLOSURE_CODE(rax)\n"
+        ^ "\tadd rsp, 8*1 ; pop env\n"
+        ^ "\tpop rbx ; pop arg count\n"
+        ^ "\tlea rsp, [rsp + 8*rbx]; or alternately:\n"
+        ^ "\t; shl rbx, 3 ; rbx = rbx * 8\n"
+        ^ "\t; add rsp, rbx ; pop args\n"
+        (* let rec func argzzz = 
           match argzzz with 
           | [] -> ""
           | first :: rest -> 
@@ -2068,7 +2095,7 @@ module Code_Generation : CODE_GENERATION = struct
           ^(Printf.sprintf "call rax\n")
           ^(Printf.sprintf "mov rcx, 8\n")
           ^(Printf.sprintf "mul rcx, %d \n" arg_count)
-          ^ (Printf.sprintf "add rsp, rcx\n") 
+          ^ (Printf.sprintf "add rsp, rcx\n")  *)
           
 
          (* raise (X_not_yet_implemented "final project (applic non tail call)") *)
