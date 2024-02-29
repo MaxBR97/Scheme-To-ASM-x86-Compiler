@@ -2048,57 +2048,26 @@ module Code_Generation : CODE_GENERATION = struct
          ^ (Printf.sprintf "%s:\t; new closure is in rax\n" label_end)
       | ScmLambda' (params', Opt opt, body) ->
          raise (X_not_yet_implemented "final project")
-      | ScmApplic' (proc, args, Non_Tail_Call) -> 
-        let args_code =
-          String.concat ""
-            (List.map
-               (fun arg ->
-                 let arg_code = run params env arg in
-                 arg_code
-                 ^ "\tpush rax\n")
-               (List.rev args))
-        and proc_code = run params env proc
-        and label_recycle_frame_loop =
-          make_tc_applic_recycle_frame_loop ()
-        and label_recycle_frame_done =
-          make_tc_applic_recycle_frame_done ()
-        in
-        "\t; preparing a non tail-call\n"
-        ^ args_code
-        ^ (Printf.sprintf "\tpush %d\t;--- arg count\n" (List.length args))
-        ^ proc_code
-        ^ "\tcmp byte [rax], T_closure\n"
-        ^ "\tjne L_error_non_closure\n"
-        ^ "\tpush SOB_CLOSURE_ENV(rax)\n\n"
-        ^ "\tjmp SOB_CLOSURE_CODE(rax)\n"
-        ^ "\tadd rsp, 8*1 ; pop env\n"
-        ^ "\tpop rbx ; pop arg count\n"
-        ^ "\tlea rsp, [rsp + 8*rbx]; or alternately:\n"
-        ^ "\t; shl rbx, 3 ; rbx = rbx * 8\n"
-        ^ "\t; add rsp, rbx ; pop args\n"
-        (* let rec func argzzz = 
-          match argzzz with 
-          | [] -> ""
-          | first :: rest -> 
-            let argument = "\n" ^ (run params env first) in
-            let push = (Printf.sprintf "push rax\n") in
-            (func rest) ^ (argument ^ push)
-          | _ -> raise (X_not_yet_implemented "bad (ScmApplic code generation)") in
-            let closureGen = (run params env proc)  in
-            let arg_count = List.length args in
-          
-           (func args) 
-          ^ (Printf.sprintf "\npush %d\n" arg_count) 
-          ^ closureGen 
-          ^(Printf.sprintf "\npush qword rax\n")
-          ^(Printf.sprintf "add rax , 1\n") 
-          ^(Printf.sprintf "call rax\n")
-          ^(Printf.sprintf "mov rcx, 8\n")
-          ^(Printf.sprintf "mul rcx, %d \n" arg_count)
-          ^ (Printf.sprintf "add rsp, rcx\n")  *)
-          
+      | ScmApplic' (proc, args, Non_Tail_Call) ->             (*------- should be fixed -----*) (*for final project*) 
+            let args_count= (List.length args) in
+            let push_args_on_stack=
+              (List.fold_right 
+                      (fun arg push_on_stack_code ->
+                             let arg_calc_code = (run params env arg) in
+                             push_on_stack_code ^ (Printf.sprintf "\n%s" arg_calc_code) ^ "\tpush rax\n"  )
+                      args
+                      "PUSH_ARGS:" )
+                                  in 
+              let push_arg_count=(Printf.sprintf "\tpush %d ; -------arg-count\n\nFML:\n" args_count) in
+              let eval_closure= (run params env proc) in 
+              let check_if_closure= "\tcmp byte [rax], T_closure" in
+              let runtime_error_if_not_closure= "\n\tjne L_error_non_closure" in
+              let lex_env_ptr_push="\n\tpush SOB_CLOSURE_ENV(rax)" in
+              let call_body_code= "\n\tcall SOB_CLOSURE_CODE(rax) ;stack will be cleaned by the CALLEE!!!" in
+              
+              push_args_on_stack ^ push_arg_count ^ eval_closure ^ check_if_closure ^ runtime_error_if_not_closure ^ lex_env_ptr_push ^ call_body_code 
+              (*ours...................................*)
 
-         (* raise (X_not_yet_implemented "final project (applic non tail call)") *)
       | ScmApplic' (proc, args, Tail_Call) -> 
          let args_code =
            String.concat ""
