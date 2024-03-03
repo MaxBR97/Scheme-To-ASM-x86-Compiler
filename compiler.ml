@@ -1876,6 +1876,49 @@ module Code_Generation : CODE_GENERATION = struct
     (index := !index + 1;
      Printf.sprintf "%s_%04x" prefix !index);;
 
+
+  (* added by me for final project - roy 27 february*)
+    let make_then_label= make_make_label ".L_then";;
+    let make_else_label= make_make_label ".L_else";;
+
+    let make_lambda_opt_arity_ok=
+      make_make_label ".L_lambda_opt_arity_check_ok";;
+
+    let make_opt_arg_empty=
+    make_make_label ".Label_opt_arg_empty";;
+    
+    
+    let make_build_opt_list=
+    make_make_label ".Label_build_opt_list";;
+
+    let make_push_up_the_stack= 
+    make_make_label ".Label_push_up_the_stack";;
+
+    let make_update_opt_list=
+    make_make_label ".Label_update_built_opt_list";;
+
+    let make_update_rsp_opt_list_case=
+    make_make_label ".Label_update_rsp";;
+
+    let make_push_down_the_stack=
+    make_make_label ".Label_push_down_the_stack";;
+
+    let make_push_empty_list_and_update_rsp=
+    make_make_label ".Label_push_empty_list_and_update_rsp";;
+
+    let make_lambda_opt_stack_fix_end=
+    make_make_label ".Label_lambda_opt_stack_fix_end";;
+
+    let make_push_args_label=
+    make_make_label ".Label_PUSH_ARGS";;
+
+    let make_fml_label=
+    make_make_label ".Label_FML"
+   (* added by me for final project - roy 27 february*)
+
+
+
+
   let make_if_else = make_make_label ".L_if_else";;
   let make_if_end = make_make_label ".L_if_end";;
   let make_or_end = make_make_label ".L_or_end";;
