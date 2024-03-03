@@ -2046,8 +2046,145 @@ module Code_Generation : CODE_GENERATION = struct
          ^ "\tleave\n"
          ^ (Printf.sprintf "\tret AND_KILL_FRAME(%d)\n" (List.length params'))
          ^ (Printf.sprintf "%s:\t; new closure is in rax\n" label_end)
-      | ScmLambda' (params', Opt opt, body) ->
-         raise (X_not_yet_implemented "final project")
+    (**************)
+    (**************)
+           (**************)
+        | ScmLambda' (params', Opt opt, body) ->                         (*implemented for final project*)
+          let label_loop_env = make_lambda_opt_loop_env ()
+           and label_loop_env_end = make_lambda_opt_loop_env_end ()
+           and label_loop_params = make_lambda_opt_loop_params()
+           and label_loop_params_end =  make_lambda_opt_loop_params_end()
+           and label_code =  make_lambda_opt_code ()
+           and label_arity_ok_opt = make_lambda_opt_arity_ok ()
+           and label_end = make_lambda_opt_end ()
+           and label_opt_arg_empty= make_opt_arg_empty ()
+           and label_build_opt_list= make_build_opt_list()
+           and label_update_built_opt_list= make_update_opt_list ()
+           and label_push_up_the_stack= make_push_up_the_stack ()
+           and label_push_down_the_stack= make_push_down_the_stack ()
+           and label_update_arg_count_and_rsp_non_empt= make_update_rsp_opt_list_case ()
+           and label_stack_fix_end= make_lambda_opt_stack_fix_end ()
+           and label_push_empty_list_update_rsp= make_push_empty_list_and_update_rsp ()
+           and param_count= (List.length params') + 1
+           in
+           "\tmov rdi, (1 + 8 + 8)\t; sob closure\n"
+           ^ "\tcall malloc\n"
+           ^ "\tpush rax\n"
+           ^ (Printf.sprintf "\tmov rdi, 8 * %d\t; new rib\n" param_count) (*changed from params to : params+1*)
+           ^ "\tcall malloc\n"
+           ^ "\tpush rax\n"
+           ^ (Printf.sprintf "\tmov rdi, 8 * %d\t; extended env\n" (env + 1))
+           ^ "\tcall malloc\n"
+           ^ "\tmov rdi, ENV\n"
+           ^ "\tmov rsi, 0\n"
+           ^ "\tmov rdx, 1\n"
+           ^ (Printf.sprintf "%s:\t; ext_env[i + 1] <-- env[i]\n"
+                label_loop_env)
+           ^ (Printf.sprintf "\tcmp rsi, %d\n" env)
+           ^ (Printf.sprintf "\tje %s\n" label_loop_env_end)
+           ^ "\tmov rcx, qword [rdi + 8 * rsi]\n"
+           ^ "\tmov qword [rax + 8 * rdx], rcx\n"
+           ^ "\tinc rsi\n"
+           ^ "\tinc rdx\n"
+           ^ (Printf.sprintf "\tjmp %s\n" label_loop_env)
+           ^ (Printf.sprintf "%s:\n" label_loop_env_end)
+           ^ "\tpop rbx\n"
+           ^ "\tmov rsi, 0\n"
+           ^ (Printf.sprintf "%s:\t; copy params\n" label_loop_params)
+           ^ (Printf.sprintf "\tcmp rsi, %d\n" param_count) (*cahnged from params to : params+1*)
+           ^ (Printf.sprintf "\tje %s\n" label_loop_params_end)
+           ^ "\tmov rdx, qword [rbp + 8 * rsi + 8 * 4]\n"
+           ^ "\tmov qword [rbx + 8 * rsi], rdx\n"
+           ^ "\tinc rsi\n"
+           ^ (Printf.sprintf "\tjmp %s\n" label_loop_params)
+           ^ (Printf.sprintf "%s:\n" label_loop_params_end)
+           ^ "\tmov qword [rax], rbx\t; ext_env[0] <-- new_rib \n"
+           ^ "\tmov rbx, rax\n"
+           ^ "\tpop rax\n"
+           ^ "\tmov byte [rax], T_closure\n"
+           ^ "\tmov SOB_CLOSURE_ENV(rax), rbx\n"
+           ^ (Printf.sprintf "\tmov SOB_CLOSURE_CODE(rax), %s\n" label_code)
+           ^ (Printf.sprintf "\tjmp %s\n" label_end)
+           ^ (Printf.sprintf "%s:\t; lambda-simple body\n ;;BODY_CODE\n" label_code)     (* here the body code starts*)
+           ^ ((Printf.sprintf "\tmov r9 ,[rsp+8*2] ;;arg-count\n"))
+           ^ (Printf.sprintf "\tsub r9 ,%d\n" param_count) 
+           ^ (Printf.sprintf "\tmov rcx, r9 ; rcx will have the value: args_count - param_count\n" )
+           ^ (Printf.sprintf "\tcmp rcx, -1\n")
+           ^ (Printf.sprintf "\tjge %s\n" label_arity_ok_opt)
+           ^ (Printf.sprintf "\tpush qword [rsp+8*2] ;;arg-count for run-time error func\n")  
+           ^ (Printf.sprintf "\tpush %d ;;param-count for run-time error func\n" param_count)  
+           ^ (Printf.sprintf "\tjmp L_error_incorrect_arity_opt ;;print runtime error for incorrect num of args! \n" )
+           ^ (Printf.sprintf "%s:\n" label_arity_ok_opt)
+           ^ (Printf.sprintf "\tmov rbx, sob_nil\n")
+           ^ (Printf.sprintf "\tmov r8, [rsp+8*2] ;;r8 will hold arg-count\n") 
+           ^ (Printf.sprintf "\tlea rdx, [rsp + 8*2 + r8*8] ;address of first arg\n")
+           ^ (Printf.sprintf "\tpush rdx ;;back it up on the stack\n")
+           ^ (Printf.sprintf "\tcmp rcx, -1\n")
+           ^ (Printf.sprintf "\tje %s\n" label_opt_arg_empty)
+           ^ (Printf.sprintf "\tmov rsi, 0\n")
+           ^ (Printf.sprintf "\tlea r10, [r8-%d+1] ;;this will be the length of the optional list! \n" param_count) (*  mov r10 ,  |Args|- |Params|+1 *)
+           ^ (Printf.sprintf "%s:\n" label_build_opt_list)  (*Label_build_opt_list:*)
+           ^ (Printf.sprintf "\tcmp rsi, r10\n") 
+           ^ (Printf.sprintf "\tje %s\n" label_update_built_opt_list) (*je Label_update_built_opt_list*)
+           ^ (Printf.sprintf "\tmov rdi, (1 + 8 + 8) ;;amount of memory for malloc sys-call in rdi\n")
+           ^ (Printf.sprintf "\tcall malloc ;; new ptr allocated will be in rax\n")
+           ^ (Printf.sprintf "\tmov r11 , [rdx] ;; value of current arg in the to-be optlist\n")
+           ^ (Printf.sprintf "\tmov byte [rax] , T_pair ;;RRTI for pair\n")
+           ^ (Printf.sprintf "\tmov SOB_PAIR_CAR(rax) , r11\n")
+           ^ (Printf.sprintf "\tmov SOB_PAIR_CDR(rax) , rbx ;; rbx- the list we created so far\n")
+           ^ (Printf.sprintf "\tmov rbx, rax ;; store list we created so far in rbx\n")
+           ^ (Printf.sprintf "\tinc rsi\n")
+           ^ (Printf.sprintf "\tsub rdx, 8 ;;mov to next arg\n")
+           ^ (Printf.sprintf "\tjmp %s\n" label_build_opt_list) (*jmp .Label_build_opt_list*)
+           ^ (Printf.sprintf "%s:\n" label_update_built_opt_list) (* Label_update_built_opt_list: *)
+           ^ (Printf.sprintf "\tpop rdx\n")
+           ^ (Printf.sprintf "\tmov [rdx] , rbx ;;updating the built-opt-list in the appropriate location on the stack\n")
+           ^ (Printf.sprintf "\tmov r10 , %d - 1 + 3 ;; 3 for env, ret-add, arg-cout, r10 holds the num of words to push UP the stack\n" param_count )
+           ^ (Printf.sprintf "\tlea rdi, [r8 - %d] ;;how many words to push over? ;;|Args|-|Params|\n" param_count)
+           ^ (Printf.sprintf "\tlea rdx, [rsp+ 8*2 + 8*(%d-1)] ;; ADDRESS OF LAST NON OPT-PARAM! \n" param_count)
+           ^ (Printf.sprintf "\tmov r13, [rdx] ;;FOR DEBUG-CHECK THE VALUE HERE IS THE first PARAM\n") (*FOR DEBUG REMOVE LATER*)
+           ^ (Printf.sprintf "\tmov rsi, 0\n")
+           ^ (Printf.sprintf "%s:  ;;here we push the params-1+env+ret+arg-count up the stack\n" label_push_up_the_stack) (*    Label_push_up_the_stack: *)
+           ^ (Printf.sprintf "\tcmp rsi, r10\n")
+           ^ (Printf.sprintf "\tje %s\n" label_update_arg_count_and_rsp_non_empt) (* MAYBE CHANGE THIS LABLE'S NAME!!*)
+           ^ (Printf.sprintf "\tmov rcx, [rdx] ;; load the value to be pushed up the stack\n")
+           ^ (Printf.sprintf "\tmov [rdx+8*rdi], rcx ;;copy it to the pushed memory address upon the stack\n")
+           ^ (Printf.sprintf "\tinc rsi\n")
+           ^ (Printf.sprintf "\tsub rdx, 8 ;;move to next value to be pushed (moving down)\n")
+           ^ (Printf.sprintf "\tjmp %s ;; go back to push loop\n" label_push_up_the_stack) (*jmp Label_push_up_the_stack*)
+           ^ (Printf.sprintf "%s: ;;updating rsp and arg-count\n" label_update_arg_count_and_rsp_non_empt)
+           ^ (Printf.sprintf "\tlea rsp, [rsp+8*rdi]\n")
+           ^ (Printf.sprintf "\tmov qword [rsp+8*2] , %d ;;updating the new arg-count to be param-count\n" param_count )
+           ^ (Printf.sprintf "\tmov qword r13 ,[rsp+8*2] ;; r13 must hold arg-count!! DEBUG THIS\n")              (*FOR DEBUG REMOVE LATER*)
+           ^ (Printf.sprintf "\tjmp %s\n" label_stack_fix_end) (*jmp .Label_lambda_opt_stack_fix_end*)
+           ^ (Printf.sprintf "%s: ;;fixing for the case where opt-arg is nil\n" label_opt_arg_empty) (*.Label_opt_arg_empty:*)
+           ^ (Printf.sprintf "\tpop rcx ;;now rcx will have the address where we push the empty opt-list to!\n")
+           ^ (Printf.sprintf "\tlea rdi, [rsp-8]\n")
+           ^ (Printf.sprintf "\tmov rsi, 0\n")
+           ^ (Printf.sprintf "\tlea r9, [r8+3] ;num of words in the stack to push down by 1 address\n")        (*   mov r9, 3+|Args| ;num of words in the stack to push down by 1 address *)
+           ^ (Printf.sprintf "%s:\n" label_push_down_the_stack) (* .Label_push_down_the_stack: *)
+           ^ (Printf.sprintf "\tcmp rsi , r9\n") 
+           ^ (Printf.sprintf "\tje %s\n" label_push_empty_list_update_rsp)
+           ^ (Printf.sprintf "\tmov rdx, [rdi+8] ;;load the value of the word above\n")
+           ^ (Printf.sprintf "\tmov [rdi] , rdx ;;update the word bellow to word above\n")
+           ^ (Printf.sprintf "\tadd rdi, 8 ;;move up one word\n")
+           ^ (Printf.sprintf "\tinc rsi ;;counter++ \n")
+           ^ (Printf.sprintf "\tjmp %s\n" label_push_down_the_stack) (* go back to loop*)
+           ^ (Printf.sprintf "%s:\n" label_push_empty_list_update_rsp) (* Label_push_empty_list_and_update_rsp: *)
+           ^ (Printf.sprintf "\tsub rsp, 8\n")
+           ^ (Printf.sprintf"\tmov [rcx], rbx\n")
+           ^ (Printf.sprintf "\tmov qword [rsp+8*2], %d ;;update arg-count to be param-count\n" param_count)   (*end of Label_push_empty_list_and_update_rsp: *)
+           ^ (Printf.sprintf "%s: \n" label_stack_fix_end)
+           ^ "\tenter 0, 0\n"
+           ^ (run param_count  (env + 1) body)
+           ^ "\tleave\n"
+           ^ (Printf.sprintf "\tret AND_KILL_FRAME(%d)\n" (List.length params'))
+           ^ (Printf.sprintf "\n;;BODY CODE ENDS HERE!!! ------------------\n\n")
+           ^ (Printf.sprintf "%s:\t; new closure is in rax\n" label_end)
+
+
+(*JUNK*)
+        (* raise (X_not_yet_implemented "final project") *)
       | ScmApplic' (proc, args, Non_Tail_Call) ->             (*------- should be fixed -----*) (*for final project*) 
             let args_count= (List.length args) in
             let push_args_on_stack=
