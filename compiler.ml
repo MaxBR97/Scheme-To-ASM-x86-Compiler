@@ -839,7 +839,9 @@ module Tag_Parser : TAG_PARSER = struct
       let vars_exps= List.map (fun var_sexp -> match var_sexp with (*turn lambda variabe sexps into exps*)
                     | ScmSymbol sym -> sym
                     | _ ->  raise ( X_this_should_not_happen "variable isn't a symbol!") ) vars      in
-      let final_exp= ScmApplic( ScmLambda(vars_exps, Simple, body_exp) , [] )  in
+     let final_exp= ScmApplic( ScmLambda(vars_exps, 
+                                Simple, body_exp) ,
+                         (List.fold_left (fun whatever_list curr_var -> ScmConst(ScmSymbol "whatever") :: whatever_list ) [] vars_exps ) )  in (*make sure the list holds the values whatever for every param!*)
       final_exp
     | ScmPair (ScmSymbol "and", ScmNil) -> tag_parse (ScmBoolean true)
     | ScmPair (ScmSymbol "and", exprs) ->
