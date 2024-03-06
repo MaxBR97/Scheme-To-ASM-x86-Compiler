@@ -410,7 +410,7 @@ module Reader : READER = struct
       let nt_many_sexpr_naked = PC.star(PC.caten nt_sexpr (unitify (PC.star nt_whitespace))) in
       let nt_many_sexpr = PC.caten (unitify nt_left_bracket) nt_many_sexpr_naked in
       let nt_many_sexpr = PC.caten nt_many_sexpr (unitify nt_right_bracket) in
-      let nt_complex_sexpr = PC.caten (PC.star (PC.caten nt_many_sexpr_naked nt_dot)) nt_many_sexpr_naked in
+      let nt_complex_sexpr = PC.caten (PC.caten nt_many_sexpr_naked nt_dot) nt_sexpr in
       let nt_complex_sexpr = PC.caten (unitify nt_left_bracket) nt_complex_sexpr in
       let nt_complex_sexpr = PC.caten nt_complex_sexpr (unitify nt_right_bracket) in
       let rec build_many_sexps listOfSexps = 
@@ -426,10 +426,8 @@ module Reader : READER = struct
         let rec pack_complex_sexps = (fun nt -> pack nt (fun x -> 
           let rec run complex = 
             match complex with
-            | ([] , (sexp1,_) :: [] ) -> ScmPair(sexp1, ScmNil)
-            | ([], (sexp1,_) :: rest ) -> ScmPair(sexp1, run ([], rest))
-            | (((sexp1,_) :: [] ,['.']) :: rest2 , rest ) -> ScmPair(sexp1, run (rest2, rest))
-            | (((sexp1,_) :: rest1 ,['.']) :: rest2 , rest ) -> ScmPair(sexp1, run (((rest1,['.']) :: rest2), rest))
+            | (( (sexp,_) :: [], ['.']) ,afterDotSexp) -> ScmPair(sexp, afterDotSexp )
+            | (( (sexp,_) :: rest, ['.']) ,afterDotSexp) -> ScmPair(sexp, run ((rest, ['.']), afterDotSexp) )
             | _ -> failwith "shouldnt reach here!" in
             
           match x with 
@@ -438,7 +436,7 @@ module Reader : READER = struct
 
           )) in
       let pack_pair = (fun nt -> pack nt (fun ((_,( (leftSexp,_),rightSexp)),_) -> build_pair(leftSexp,rightSexp))) in
-      (*disj (disj (pack_pair nt_pair) (pack_many_sexps nt_many_sexpr))*) (pack_complex_sexps nt_complex_sexpr) str 
+      disj (*(disj (pack_pair nt_pair)*) (pack_many_sexps nt_many_sexpr) (pack_complex_sexps nt_complex_sexpr) str 
     
     
   and make_quoted_form nt_qf qf_name =
