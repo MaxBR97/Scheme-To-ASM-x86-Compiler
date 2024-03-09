@@ -2048,7 +2048,14 @@ module Code_Generation : CODE_GENERATION = struct
          let mov6 = (Printf.sprintf "mov rax, L_constants + %d\n" (search_constant_address (ScmVoid) consts) ) in
          (valToSet ^ mov1 ^ mov2 ^ mov3 ^ mov4 ^ mov5 ^ mov6)
       | ScmVarSet' (Var' (v, Bound (major, minor)), expr') ->
-         raise (X_not_yet_implemented "final project")
+          let valToSet = (run params env expr') in
+          valToSet
+          ^ (Printf.sprintf "\n\tmov rcx, [rbp+8*2] ;;env-deref\n" )
+          ^ (Printf.sprintf "\tmov rbx , [rcx+8*%d] \n" major)
+          ^ (Printf.sprintf "\tmov [rbx+8*%d] ,rax ;;set the new value! \n" minor) 
+          ^ (Printf.sprintf "\tmov rax, L_constants + %d\n" (search_constant_address ( ScmVoid) consts) )
+          (* raise (X_not_yet_implemented "final project")   *)           (* DONE *)
+	  
       | ScmVarDef' (Var' (v, Free), expr') ->
          let label = search_free_var_table v free_vars in
          (run params env expr')
