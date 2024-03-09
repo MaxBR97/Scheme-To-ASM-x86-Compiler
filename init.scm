@@ -615,6 +615,8 @@
           ((and (string? e1) (string? e2)
                 (= (string-length e1) (string-length e2)))
            (string=? e1 e2))
+          ((and (number? e1) (number? e2)) (= e1 e2))
+          ((and (char? e1) (char? e2)) (char=? e1 e2))
           (else (eq? e1 e2)))))
 
 (define assoc

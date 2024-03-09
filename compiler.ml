@@ -1094,7 +1094,7 @@ Semantic_Analysis.tag_lexical_address_for_var "b" ["a"; "c"] [["a";] ; ["d";] ;[
       | ScmLambda(param_list, kind, exp) -> 
           let ans = match kind with
           | Simple -> ScmLambda'(param_list, kind, accumulateEnvironment exp param_list (params :: env))
-          |  Opt(someString) -> ScmLambda'(param_list, kind, (accumulateEnvironment exp (param_list @ [someString]) ( (param_list@[someString]) :: env) ) ) (*come back here if issues arise*)
+          |  Opt(someString) -> ScmLambda'(param_list, kind, (accumulateEnvironment exp (param_list @ [someString]) ( params :: env) ) ) (*come back here if issues arise*)
           | _ -> failwith "shouldnt happen" in
            ans
       | ScmApplic(exp, exp_list) -> ScmApplic'( (accumulateEnvironment exp params env), (map exp_list (fun x -> accumulateEnvironment x params env)), Non_Tail_Call)
