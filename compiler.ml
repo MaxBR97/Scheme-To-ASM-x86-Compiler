@@ -2023,8 +2023,18 @@ module Code_Generation : CODE_GENERATION = struct
          let mov1 = (Printf.sprintf "\nmov qword [%s], rax; ~~~\n"  (search_free_var_table v free_vars)) in
          let mov2 = (Printf.sprintf "mov rax, L_constants + %d\n" (search_constant_address (ScmVoid) consts) ) in
          (valToSet ^ mov1 ^ mov2)
-      | ScmVarSet' (Var' (v, Param minor), ScmBox' _) ->
-         raise (X_not_yet_implemented "final project")
+      |  ScmVarSet' (Var' (v, Param minor), ScmBox' _) -> (*allocate mem for the param, update the new value in mem allocated and set param to be the box address*)
+            
+          (Printf.sprintf "\n\tmov rdi , 8\n")
+          ^ (Printf.sprintf "\tcall malloc ;;allocated mem will be in rax\n")
+          ^ (Printf.sprintf "\tlea rbx , [rbp+8*4+8*%d];; param stack address\n" minor)
+          ^ (Printf.sprintf "\tmov rcx, [rbx] ;;param val\n ")
+          ^ (Printf.sprintf "\tmov [rax] ,rcx ;;set the boxed-val\n")
+          ^ (Printf.sprintf "\tmov [rbx] ,rax ;;store the boxed param in the stack \n")
+          ^ (Printf.sprintf "\tmov rax, L_constants + %d\n" (search_constant_address ( ScmVoid) consts) )
+
+          (* raise (X_not_yet_implemented "final project") *)
+	  
       | ScmVarSet' (Var' (v, Param minor), expr') ->
          let valToSet = (run params env expr') in
          let mov1 = (Printf.sprintf "\nmov qword rcx, %d" minor) in
@@ -2051,7 +2061,15 @@ module Code_Generation : CODE_GENERATION = struct
          (run params env (ScmVarGet' var'))
          ^ "\tmov rax, qword [rax]\n"
       | ScmBoxSet' (var', expr') ->
-         raise (X_not_yet_implemented "final project")
+           let val_to_set= (run params env expr') in
+           let get_boxed_var= (run params env (ScmVarGet' var')) in (*NOTE: WE WANT TO RETURN THE BOX-ADDRESS, NOT THE VAL!! SO DON'T USE ScmBoxGet' var'      !!!!!!!!!!!*)
+           val_to_set 
+           ^ (Printf.sprintf "\n\tpush rax ;;backup the val to set on the stack\n")
+           ^ get_boxed_var
+           ^ (Printf.sprintf "\tpop qword [rax] ;;store val-to-set in boxed address\n")
+           ^ (Printf.sprintf "\tmov rax, L_constants + %d\n" (search_constant_address ( ScmVoid) consts) )
+          (*  raise (X_not_yet_implemented "final project")*)
+	  
       | ScmLambda' (params', Simple, body) ->
          let label_loop_env = make_lambda_simple_loop_env ()
          and label_loop_env_end = make_lambda_simple_loop_env_end ()
@@ -2266,7 +2284,7 @@ module Code_Generation : CODE_GENERATION = struct
               let check_if_closure= "\tcmp byte [rax], T_closure" in
               let runtime_error_if_not_closure= "\n\tjne L_error_non_closure" in
               let lex_env_ptr_push="\n\tpush SOB_CLOSURE_ENV(rax)" in
-              let call_body_code= "\n\tcall SOB_CLOSURE_CODE(rax) ;stack will be cleaned by the CALLEE!!!" in
+              let call_body_code= "\n\tcall SOB_CLOSURE_CODE(rax) ;stack will be cleaned by the CALLEE!!!\n" in
               
               push_args_on_stack ^ push_arg_count ^ eval_closure ^ check_if_closure ^ runtime_error_if_not_closure ^ lex_env_ptr_push ^ call_body_code 
               (*ours...................................*)
