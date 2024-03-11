@@ -2418,6 +2418,10 @@ let rec test_quadruple quadruples index =
   | (q::rest, x) -> (test_quadruple rest (index-1))
   | _ -> failwith "shouldnt happen";;
 
+  (* use instruction:
+     #use "compiler.ml";;
+     #use "tests_hub/max_tests.ml";;
+     test_all quadruples;; *)
   let test_all quadruples = 
     let rec run index = 
       match (test_quadruple quadruples index) with
