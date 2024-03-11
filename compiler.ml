@@ -2272,7 +2272,7 @@ module Code_Generation : CODE_GENERATION = struct
            ^ "\tenter 0, 0\n"
            ^ (run param_count  (env + 1) body)
            ^ "\tleave\n"
-           ^ (Printf.sprintf "\tret AND_KILL_FRAME(%d)\n" (List.length params'))
+           ^ (Printf.sprintf "\tret AND_KILL_FRAME(%d)\n" param_count)
            ^ (Printf.sprintf "\n;;BODY CODE ENDS HERE!!! ------------------\n\n")
            ^ (Printf.sprintf "%s:\t; new closure is in rax\n" label_end)
 
