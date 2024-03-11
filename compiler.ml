@@ -2401,3 +2401,31 @@ end;; (* end of Code_Generation struct *)
 
 let test = Code_Generation.compile_and_run_scheme_string "output";;
 
+(* 1 - end of list, 0 - success *)
+let rec test_quadruple quadruples index = 
+  match (quadruples, index) with
+  | (q :: rest, 0) ->  (match q with
+      | (r , p , s, c) -> (match (read r) with
+        | p -> (match (Tag_Parser.tag_parse p) with 
+            | s -> (match (Semantic_Analysis.annotate_lexical_address s) with 
+                | c -> 0
+                | _ -> failwith "failed annotating lexical address")
+            | _ -> failwith "failed tag parse")
+        | _ -> failwith "failed read")
+      | _ -> failwith "shouldnt happen, failed")
+      
+  | (q :: [], x) -> 1
+  | (q::rest, x) -> (test_quadruple rest (index-1))
+  | _ -> failwith "shouldnt happen";;
+
+  let test_all quadruples = 
+    let rec run index = 
+      match (test_quadruple quadruples index) with
+       | 0 -> (run (index+1))
+       | 1 -> "success"
+       | _ -> "fail" in
+    run 0
+  ;;
+
+      
+
