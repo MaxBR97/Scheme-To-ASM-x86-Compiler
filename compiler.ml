@@ -2438,7 +2438,7 @@ let rec test_quadruple quadruples index =
 
   (* use instruction:
      #use "compiler.ml";;
-     #use "tests_hub/max_tests.ml";;
+     #use "tests_hub/roee_max_tests.ml";;
      test_all quadruples;; *)
   let test_all quadruples = 
     let rec run index = 
