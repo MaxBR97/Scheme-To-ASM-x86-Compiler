@@ -668,24 +668,20 @@ module Tag_Parser : TAG_PARSER = struct
             | ScmPair(ScmSymbol("else") ,restOfExps) -> 
               ScmPair(ScmSymbol("begin"), restOfExps)
             | ScmPair(exp, ScmPair( ScmSymbol("=>") , expf)) ->
-              let lambda1 = ScmPair (ScmSymbol "lambda", ScmPair (ScmNil, ScmPair(expf,ScmNil))) in 
+              let lambda1 = ScmPair (ScmSymbol "lambda", ScmPair (ScmNil, expf)) in 
               let lambda2 = ScmPair (ScmSymbol "lambda", ScmPair (ScmNil, ScmPair((macro_expand_cond_ribs rest), ScmNil ))) in
               let valueAssignment1 = ScmPair (ScmSymbol("value"),ScmPair (exp, ScmNil)) in
               let valueAssignment2 = ScmPair (ScmSymbol("f"),ScmPair (lambda1, ScmNil)) in
               let valueAssignment3 = ScmPair (ScmSymbol("rest"),ScmPair (lambda2, ScmNil)) in
-              let ifExp = ScmPair (ScmSymbol "if", ScmPair (ScmSymbol("value"), ScmPair (ScmPair(ScmSymbol("f"),ScmNil), ScmPair (ScmPair(ScmSymbol("rest"),ScmNil), ScmNil)))) in
+              let ifExp = ScmPair (ScmSymbol "if", ScmPair (ScmSymbol("value"), ScmPair (ScmPair( ScmPair(ScmSymbol("f"),ScmNil) , ScmPair(ScmSymbol("value") , ScmNil) ), ScmPair (ScmPair(ScmSymbol("rest"),ScmNil), ScmNil)))) in
               ScmPair (ScmSymbol "let", ScmPair (ScmPair(valueAssignment1, ScmPair(valueAssignment2, ScmPair(valueAssignment3, ScmNil))), ScmPair(ifExp ,ScmNil)))
             | ScmPair(test, exps) -> 
               (* ScmPair (ScmSymbol "if", ScmPair (test, ScmPair (exps, ScmPair (macro_expand_cond_ribs rest, ScmNil))))  *)
                 ScmPair (ScmSymbol "if", ScmPair (test, ScmPair (ScmPair(ScmSymbol("begin"), exps), ScmPair (macro_expand_cond_ribs rest, ScmNil)))) 
-              (*(ScmLambda (["value"; "f"; "rest"], Simple,
-      ScmIf (ScmVarGet (Var "value"),
-       ScmApplic (ScmApplic (ScmVarGet (Var "f"), []),
-        [ScmVarGet (Var "value")]),
-       ScmApplic (ScmVarGet (Var "rest"), [])))  *)
+              
     | _ -> failwith "shouldnt happen";;
     (* raise (X_not_yet_implemented "hw 1");; *)
-
+    (* ScmPair(ScmSymbol("f"),ScmNil)  ->  ScmPair( ScmPair(ScmSymbol("f"),ScmNil) , ScmPair("value" , ScmNil) ) *)
     let test_cond_expand ribs =
       print_sexpr stdout (macro_expand_cond_ribs 
       (List.fold_left (fun acc cur -> 
@@ -1135,13 +1131,27 @@ let rec last_only lst= match lst with
     | ScmBoxGet' var -> ScmBoxGet' var
     | ScmBoxSet' (var,expr) -> ScmBoxSet' (var, (annotate_tail_calls' false expr)) (* same as above.. body never in tail-pos*)
     | ScmLambda' (params, kind, body) -> ScmLambda'(params, kind, (annotate_tail_calls' true body)) (*  here is where we have to set the flag to true - for any applications inside the lambda body expr..  *)
-    | ScmApplic' (lambda_expr, args, Non_Tail_Call) -> 
+    (* | ScmApplic' (lambda_expr, args, Non_Tail_Call) -> 
      (* let tail_annotated_args= List.map ()*)
       let in_tail= in_tail_pos in
       (match in_tail with 
       | true -> ScmApplic'( ( annotate_tail_calls' in_tail_pos lambda_expr) , args , Tail_Call) (*if in tail pos - then it's a tail call!*)
       | false -> ScmApplic'( ( annotate_tail_calls' in_tail_pos lambda_expr) ,  args , Non_Tail_Call) (*otherwise not a tail call!*)
-      )
+      ) *)
+      | ScmApplic' (lambda_expr, args, Non_Tail_Call) -> 
+        let rec run args = match args with 
+        | [] -> []
+        | arg :: [] -> ( annotate_tail_calls' false arg) :: []
+        | arg :: rest -> ( annotate_tail_calls' false arg) :: (run rest) 
+        | _ -> failwith "this should not happen!!"
+          in
+              let in_tail= in_tail_pos in
+              (match in_tail with 
+              | true -> ScmApplic'( ( annotate_tail_calls' false lambda_expr) , (run args) , Tail_Call) (*if in tail pos - then it's a tail call!*)
+              | false -> ScmApplic'( ( annotate_tail_calls' in_tail_pos lambda_expr) , (run args) , Non_Tail_Call) (*otherwise not a tail call!*)
+              )
+
+        
     | ScmSeq' seq_of_exprs ->  (match seq_of_exprs with
         | [] -> ScmSeq' []
         | [expr] -> ScmSeq' [(annotate_tail_calls' in_tail_pos expr)]
