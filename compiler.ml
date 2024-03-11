@@ -2430,6 +2430,3 @@ let rec test_quadruple quadruples index =
        | _ -> "fail" in
     run 0
   ;;
-
-      
-
