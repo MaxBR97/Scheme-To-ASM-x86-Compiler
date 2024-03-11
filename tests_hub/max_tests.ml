@@ -1,10 +1,10 @@
 let quadruples = [
-  ("ab", ScmSymbol "a", ScmVarGet (Var "a"), ScmVarGet' (Var' ("a", Free)))
+  ("a", ScmSymbol "a", ScmVarGet (Var "a"), ScmVarGet' (Var' ("a", Free)))
 
 ;
 
-  ("1234", ScmNumber (ScmFraction (1234, 1)), ScmConst (ScmNumber (ScmFraction (1234, 1))),
-   ScmConst' (ScmNumber (ScmFraction (1234, 1))))
+  ("1234", ScmNumber (ScmInteger 1234), ScmConst (ScmNumber (ScmInteger 1234)),
+   ScmConst' (ScmNumber (ScmInteger 1234)))
 
 ;
 
@@ -221,7 +221,7 @@ let quadruples = [
                     (ScmPair
                       (ScmSymbol "zero?", ScmPair (ScmSymbol "n", ScmNil)),
                      ScmPair
-                      (ScmNumber (ScmFraction (1, 1)),
+                      (ScmNumber (ScmInteger 1),
                        ScmPair
                         (ScmPair
                           (ScmSymbol "*",
@@ -236,7 +236,7 @@ let quadruples = [
                                      ScmPair
                                       (ScmSymbol "n",
                                        ScmPair
-                                        (ScmNumber (ScmFraction (1, 1)), ScmNil))),
+                                        (ScmNumber (ScmInteger 1), ScmNil))),
                                    ScmNil)),
                                ScmNil))),
                          ScmNil)))),
@@ -244,7 +244,7 @@ let quadruples = [
            ScmNil)),
        ScmNil),
      ScmPair
-      (ScmPair (ScmSymbol "fact", ScmPair (ScmNumber (ScmFraction (5, 1)), ScmNil)),
+      (ScmPair (ScmSymbol "fact", ScmPair (ScmNumber (ScmInteger 5), ScmNil)),
        ScmNil))),
  ScmApplic
   (ScmLambda (["fact"], Simple,
@@ -252,14 +252,14 @@ let quadruples = [
      [ScmVarSet (Var "fact",
        ScmLambda (["n"], Simple,
         ScmIf (ScmApplic (ScmVarGet (Var "zero?"), [ScmVarGet (Var "n")]),
-         ScmConst (ScmNumber (ScmFraction (1, 1))),
+         ScmConst (ScmNumber (ScmInteger 1)),
          ScmApplic (ScmVarGet (Var "*"),
           [ScmVarGet (Var "n");
            ScmApplic (ScmVarGet (Var "fact"),
             [ScmApplic (ScmVarGet (Var "-"),
-              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmFraction (1, 1)))])])]))));
+              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmInteger 1))])])]))));
       ScmApplic (ScmVarGet (Var "fact"),
-       [ScmConst (ScmNumber (ScmFraction (5, 1)))])]),
+       [ScmConst (ScmNumber (ScmInteger 5))])]),
   [ScmConst (ScmSymbol "whatever")]),
  ScmApplic'
   (ScmLambda' (["fact"], Simple,
@@ -270,18 +270,18 @@ let quadruples = [
         ScmIf'
          (ScmApplic' (ScmVarGet' (Var' ("zero?", Free)),
            [ScmVarGet' (Var' ("n", Param 0))], Non_Tail_Call),
-         ScmConst' (ScmNumber (ScmFraction (1, 1))),
+         ScmConst' (ScmNumber (ScmInteger 1)),
          ScmApplic' (ScmVarGet' (Var' ("*", Free)),
           [ScmVarGet' (Var' ("n", Param 0));
            ScmApplic' (ScmBoxGet' (Var' ("fact", Bound (0, 0))),
             [ScmApplic' (ScmVarGet' (Var' ("-", Free)),
               [ScmVarGet' (Var' ("n", Param 0));
-               ScmConst' (ScmNumber (ScmFraction (1, 1)))],
+               ScmConst' (ScmNumber (ScmInteger 1))],
               Non_Tail_Call)],
             Non_Tail_Call)],
           Tail_Call))));
       ScmApplic' (ScmBoxGet' (Var' ("fact", Param 0)),
-       [ScmConst' (ScmNumber (ScmFraction (5, 1)))], Tail_Call)]),
+       [ScmConst' (ScmNumber (ScmInteger 5))], Tail_Call)]),
   [ScmConst' (ScmSymbol "whatever")], Non_Tail_Call))
 
 ;
@@ -305,7 +305,7 @@ let quadruples = [
                     (ScmPair
                       (ScmSymbol "zero?", ScmPair (ScmSymbol "n", ScmNil)),
                      ScmPair
-                      (ScmNumber (ScmFraction (1, 1)),
+                      (ScmNumber (ScmInteger 1),
                        ScmPair
                         (ScmPair
                           (ScmSymbol "*",
@@ -320,7 +320,7 @@ let quadruples = [
                                      ScmPair
                                       (ScmSymbol "n",
                                        ScmPair
-                                        (ScmNumber (ScmFraction (1, 1)), ScmNil))),
+                                        (ScmNumber (ScmInteger 1), ScmNil))),
                                    ScmNil)),
                                ScmNil))),
                          ScmNil)))),
@@ -341,7 +341,7 @@ let quadruples = [
                       (ScmPair
                         (ScmSymbol "zero?", ScmPair (ScmSymbol "n", ScmNil)),
                        ScmPair
-                        (ScmNumber (ScmFraction (1, 1)),
+                        (ScmNumber (ScmInteger 1),
                          ScmPair
                           (ScmPair
                             (ScmSymbol "*",
@@ -356,7 +356,7 @@ let quadruples = [
                                        ScmPair
                                         (ScmSymbol "n",
                                          ScmPair
-                                          (ScmNumber (ScmFraction (1, 1)), ScmNil))),
+                                          (ScmNumber (ScmInteger 1), ScmNil))),
                                      ScmNil)),
                                  ScmNil))),
                            ScmNil)))),
@@ -378,7 +378,7 @@ let quadruples = [
                           (ScmSymbol "zero?",
                            ScmPair (ScmSymbol "n", ScmNil)),
                          ScmPair
-                          (ScmNumber (ScmFraction (1, 1)),
+                          (ScmNumber (ScmInteger 1),
                            ScmPair
                             (ScmPair
                               (ScmSymbol "*",
@@ -393,7 +393,7 @@ let quadruples = [
                                          ScmPair
                                           (ScmSymbol "n",
                                            ScmPair
-                                            (ScmNumber (ScmFraction (1, 1)),
+                                            (ScmNumber (ScmInteger 1),
                                              ScmNil))),
                                        ScmNil)),
                                    ScmNil))),
@@ -416,7 +416,7 @@ let quadruples = [
                             (ScmSymbol "zero?",
                              ScmPair (ScmSymbol "n", ScmNil)),
                            ScmPair
-                            (ScmNumber (ScmFraction (1, 1)),
+                            (ScmNumber (ScmInteger 1),
                              ScmPair
                               (ScmPair
                                 (ScmSymbol "*",
@@ -431,7 +431,7 @@ let quadruples = [
                                            ScmPair
                                             (ScmSymbol "n",
                                              ScmPair
-                                              (ScmNumber (ScmFraction (1, 1)),
+                                              (ScmNumber (ScmInteger 1),
                                                ScmNil))),
                                          ScmNil)),
                                      ScmNil))),
@@ -440,7 +440,7 @@ let quadruples = [
                  ScmNil)),
              ScmNil)))),
      ScmPair
-      (ScmPair (ScmSymbol "fact", ScmPair (ScmNumber (ScmFraction (5, 1)), ScmNil)),
+      (ScmPair (ScmSymbol "fact", ScmPair (ScmNumber (ScmInteger 5), ScmNil)),
        ScmNil))),
  ScmApplic
   (ScmLambda (["fact"; "fact1"; "fact2"; "fact3"], Simple,
@@ -448,41 +448,41 @@ let quadruples = [
      [ScmVarSet (Var "fact",
        ScmLambda (["n"], Simple,
         ScmIf (ScmApplic (ScmVarGet (Var "zero?"), [ScmVarGet (Var "n")]),
-         ScmConst (ScmNumber (ScmFraction (1, 1))),
+         ScmConst (ScmNumber (ScmInteger 1)),
          ScmApplic (ScmVarGet (Var "*"),
           [ScmVarGet (Var "n");
            ScmApplic (ScmVarGet (Var "fact1"),
             [ScmApplic (ScmVarGet (Var "-"),
-              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmFraction (1, 1)))])])]))));
+              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmInteger 1))])])]))));
       ScmVarSet (Var "fact1",
        ScmLambda (["n"], Simple,
         ScmIf (ScmApplic (ScmVarGet (Var "zero?"), [ScmVarGet (Var "n")]),
-         ScmConst (ScmNumber (ScmFraction (1, 1))),
+         ScmConst (ScmNumber (ScmInteger 1)),
          ScmApplic (ScmVarGet (Var "*"),
           [ScmVarGet (Var "n");
            ScmApplic (ScmVarGet (Var "fact2"),
             [ScmApplic (ScmVarGet (Var "-"),
-              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmFraction (1, 1)))])])]))));
+              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmInteger 1))])])]))));
       ScmVarSet (Var "fact2",
        ScmLambda (["n"], Simple,
         ScmIf (ScmApplic (ScmVarGet (Var "zero?"), [ScmVarGet (Var "n")]),
-         ScmConst (ScmNumber (ScmFraction (1, 1))),
+         ScmConst (ScmNumber (ScmInteger 1)),
          ScmApplic (ScmVarGet (Var "*"),
           [ScmVarGet (Var "n");
            ScmApplic (ScmVarGet (Var "fact3"),
             [ScmApplic (ScmVarGet (Var "-"),
-              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmFraction (1, 1)))])])]))));
+              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmInteger 1))])])]))));
       ScmVarSet (Var "fact3",
        ScmLambda (["n"], Simple,
         ScmIf (ScmApplic (ScmVarGet (Var "zero?"), [ScmVarGet (Var "n")]),
-         ScmConst (ScmNumber (ScmFraction (1, 1))),
+         ScmConst (ScmNumber (ScmInteger 1)),
          ScmApplic (ScmVarGet (Var "*"),
           [ScmVarGet (Var "n");
            ScmApplic (ScmVarGet (Var "fact"),
             [ScmApplic (ScmVarGet (Var "-"),
-              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmFraction (1, 1)))])])]))));
+              [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmInteger 1))])])]))));
       ScmApplic (ScmVarGet (Var "fact"),
-       [ScmConst (ScmNumber (ScmFraction (5, 1)))])]),
+       [ScmConst (ScmNumber (ScmInteger 5))])]),
   [ScmConst (ScmSymbol "whatever"); ScmConst (ScmSymbol "whatever");
    ScmConst (ScmSymbol "whatever"); ScmConst (ScmSymbol "whatever")]),
  ScmApplic'
@@ -497,13 +497,13 @@ let quadruples = [
         ScmIf'
          (ScmApplic' (ScmVarGet' (Var' ("zero?", Free)),
            [ScmVarGet' (Var' ("n", Param 0))], Non_Tail_Call),
-         ScmConst' (ScmNumber (ScmFraction (1, 1))),
+         ScmConst' (ScmNumber (ScmInteger 1)),
          ScmApplic' (ScmVarGet' (Var' ("*", Free)),
           [ScmVarGet' (Var' ("n", Param 0));
            ScmApplic' (ScmBoxGet' (Var' ("fact1", Bound (0, 1))),
             [ScmApplic' (ScmVarGet' (Var' ("-", Free)),
               [ScmVarGet' (Var' ("n", Param 0));
-               ScmConst' (ScmNumber (ScmFraction (1, 1)))],
+               ScmConst' (ScmNumber (ScmInteger 1))],
               Non_Tail_Call)],
             Non_Tail_Call)],
           Tail_Call))));
@@ -512,13 +512,13 @@ let quadruples = [
         ScmIf'
          (ScmApplic' (ScmVarGet' (Var' ("zero?", Free)),
            [ScmVarGet' (Var' ("n", Param 0))], Non_Tail_Call),
-         ScmConst' (ScmNumber (ScmFraction (1, 1))),
+         ScmConst' (ScmNumber (ScmInteger 1)),
          ScmApplic' (ScmVarGet' (Var' ("*", Free)),
           [ScmVarGet' (Var' ("n", Param 0));
            ScmApplic' (ScmBoxGet' (Var' ("fact2", Bound (0, 2))),
             [ScmApplic' (ScmVarGet' (Var' ("-", Free)),
               [ScmVarGet' (Var' ("n", Param 0));
-               ScmConst' (ScmNumber (ScmFraction (1, 1)))],
+               ScmConst' (ScmNumber (ScmInteger 1))],
               Non_Tail_Call)],
             Non_Tail_Call)],
           Tail_Call))));
@@ -527,13 +527,13 @@ let quadruples = [
         ScmIf'
          (ScmApplic' (ScmVarGet' (Var' ("zero?", Free)),
            [ScmVarGet' (Var' ("n", Param 0))], Non_Tail_Call),
-         ScmConst' (ScmNumber (ScmFraction (1, 1))),
+         ScmConst' (ScmNumber (ScmInteger 1)),
          ScmApplic' (ScmVarGet' (Var' ("*", Free)),
           [ScmVarGet' (Var' ("n", Param 0));
            ScmApplic' (ScmBoxGet' (Var' ("fact3", Bound (0, 3))),
             [ScmApplic' (ScmVarGet' (Var' ("-", Free)),
               [ScmVarGet' (Var' ("n", Param 0));
-               ScmConst' (ScmNumber (ScmFraction (1, 1)))],
+               ScmConst' (ScmNumber (ScmInteger 1))],
               Non_Tail_Call)],
             Non_Tail_Call)],
           Tail_Call))));
@@ -542,18 +542,18 @@ let quadruples = [
         ScmIf'
          (ScmApplic' (ScmVarGet' (Var' ("zero?", Free)),
            [ScmVarGet' (Var' ("n", Param 0))], Non_Tail_Call),
-         ScmConst' (ScmNumber (ScmFraction (1, 1))),
+         ScmConst' (ScmNumber (ScmInteger 1)),
          ScmApplic' (ScmVarGet' (Var' ("*", Free)),
           [ScmVarGet' (Var' ("n", Param 0));
            ScmApplic' (ScmBoxGet' (Var' ("fact", Bound (0, 0))),
             [ScmApplic' (ScmVarGet' (Var' ("-", Free)),
               [ScmVarGet' (Var' ("n", Param 0));
-               ScmConst' (ScmNumber (ScmFraction (1, 1)))],
+               ScmConst' (ScmNumber (ScmInteger 1))],
               Non_Tail_Call)],
             Non_Tail_Call)],
           Tail_Call))));
       ScmApplic' (ScmBoxGet' (Var' ("fact", Param 0)),
-       [ScmConst' (ScmNumber (ScmFraction (5, 1)))], Tail_Call)]),
+       [ScmConst' (ScmNumber (ScmInteger 5))], Tail_Call)]),
   [ScmConst' (ScmSymbol "whatever"); ScmConst' (ScmSymbol "whatever");
    ScmConst' (ScmSymbol "whatever"); ScmConst' (ScmSymbol "whatever")],
   Non_Tail_Call))
@@ -598,9 +598,9 @@ let quadruples = [
   (ScmSymbol "let*",
    ScmPair
     (ScmPair
-      (ScmPair (ScmSymbol "a", ScmPair (ScmNumber (ScmFraction (1, 1)), ScmNil)),
+      (ScmPair (ScmSymbol "a", ScmPair (ScmNumber (ScmInteger 1), ScmNil)),
        ScmPair
-        (ScmPair (ScmSymbol "b", ScmPair (ScmNumber (ScmFraction (2, 1)), ScmNil)),
+        (ScmPair (ScmSymbol "b", ScmPair (ScmNumber (ScmInteger 2), ScmNil)),
          ScmPair
           (ScmPair
             (ScmSymbol "a",
@@ -637,8 +637,8 @@ let quadruples = [
              [ScmVarGet (Var "a"); ScmVarGet (Var "b")])])),
         [ScmApplic (ScmVarGet (Var "+"),
           [ScmVarGet (Var "a"); ScmVarGet (Var "b")])])),
-     [ScmConst (ScmNumber (ScmFraction (2, 1)))])),
-  [ScmConst (ScmNumber (ScmFraction (1, 1)))]),
+     [ScmConst (ScmNumber (ScmInteger 2))])),
+  [ScmConst (ScmNumber (ScmInteger 1))]),
  ScmApplic'
   (ScmLambda' (["a"], Simple,
     ScmApplic'
@@ -661,8 +661,8 @@ let quadruples = [
            ScmVarGet' (Var' ("b", Param 0))],
           Non_Tail_Call)],
         Tail_Call)),
-     [ScmConst' (ScmNumber (ScmFraction (2, 1)))], Tail_Call)),
-  [ScmConst' (ScmNumber (ScmFraction (1, 1)))], Non_Tail_Call))
+     [ScmConst' (ScmNumber (ScmInteger 2))], Tail_Call)),
+  [ScmConst' (ScmNumber (ScmInteger 1))], Non_Tail_Call))
 
 ;
 
@@ -1052,12 +1052,12 @@ let quadruples = [
   (ScmSymbol "let",
    ScmPair
     (ScmPair
-      (ScmPair (ScmSymbol "a", ScmPair (ScmNumber (ScmFraction (1, 1)), ScmNil)),
+      (ScmPair (ScmSymbol "a", ScmPair (ScmNumber (ScmInteger 1), ScmNil)),
        ScmPair
-        (ScmPair (ScmSymbol "b", ScmPair (ScmNumber (ScmFraction (2, 1)), ScmNil)),
+        (ScmPair (ScmSymbol "b", ScmPair (ScmNumber (ScmInteger 2), ScmNil)),
          ScmPair
           (ScmPair
-            (ScmSymbol "c", ScmPair (ScmNumber (ScmFraction (3, 1)), ScmNil)),
+            (ScmSymbol "c", ScmPair (ScmNumber (ScmInteger 3), ScmNil)),
            ScmNil))),
      ScmPair
       (ScmPair
@@ -1070,17 +1070,17 @@ let quadruples = [
   (ScmLambda (["a"; "b"; "c"], Simple,
     ScmApplic (ScmVarGet (Var "+"),
      [ScmVarGet (Var "a"); ScmVarGet (Var "b"); ScmVarGet (Var "c")])),
-  [ScmConst (ScmNumber (ScmFraction (1, 1))); ScmConst (ScmNumber (ScmFraction (2, 1)));
-   ScmConst (ScmNumber (ScmFraction (3, 1)))]),
+  [ScmConst (ScmNumber (ScmInteger 1)); ScmConst (ScmNumber (ScmInteger 2));
+   ScmConst (ScmNumber (ScmInteger 3))]),
  ScmApplic'
   (ScmLambda' (["a"; "b"; "c"], Simple,
     ScmApplic' (ScmVarGet' (Var' ("+", Free)),
      [ScmVarGet' (Var' ("a", Param 0)); ScmVarGet' (Var' ("b", Param 1));
       ScmVarGet' (Var' ("c", Param 2))],
      Tail_Call)),
-  [ScmConst' (ScmNumber (ScmFraction (1, 1)));
-   ScmConst' (ScmNumber (ScmFraction (2, 1)));
-   ScmConst' (ScmNumber (ScmFraction (3, 1)))],
+  [ScmConst' (ScmNumber (ScmInteger 1));
+   ScmConst' (ScmNumber (ScmInteger 2));
+   ScmConst' (ScmNumber (ScmInteger 3))],
   Non_Tail_Call))
 
 ;
@@ -1133,7 +1133,7 @@ let quadruples = [
                ScmPair
                 (ScmPair (ScmSymbol "zero?", ScmPair (ScmSymbol "n", ScmNil)),
                  ScmPair
-                  (ScmNumber (ScmFraction (1, 1)),
+                  (ScmNumber (ScmInteger 1),
                    ScmPair
                     (ScmPair
                       (ScmSymbol "quasiquote",
@@ -1156,7 +1156,7 @@ let quadruples = [
                                          ScmPair
                                           (ScmSymbol "n",
                                            ScmPair
-                                            (ScmNumber (ScmFraction (1, 1)),
+                                            (ScmNumber (ScmInteger 1),
                                              ScmNil))),
                                        ScmNil)),
                                    ScmNil)),
@@ -1168,7 +1168,7 @@ let quadruples = [
  ScmVarDef (Var "fact",
   ScmLambda (["n"], Simple,
    ScmIf (ScmApplic (ScmVarGet (Var "zero?"), [ScmVarGet (Var "n")]),
-    ScmConst (ScmNumber (ScmFraction (1, 1))),
+    ScmConst (ScmNumber (ScmInteger 1)),
     ScmApplic (ScmVarGet (Var "cons"),
      [ScmConst (ScmSymbol "*");
       ScmApplic (ScmVarGet (Var "cons"),
@@ -1176,14 +1176,14 @@ let quadruples = [
         ScmApplic (ScmVarGet (Var "cons"),
          [ScmApplic (ScmVarGet (Var "fact"),
            [ScmApplic (ScmVarGet (Var "-"),
-             [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmFraction (1, 1)))])]);
+             [ScmVarGet (Var "n"); ScmConst (ScmNumber (ScmInteger 1))])]);
           ScmConst ScmNil])])])))),
  ScmVarDef' (Var' ("fact", Free),
   ScmLambda' (["n"], Simple,
    ScmIf'
     (ScmApplic' (ScmVarGet' (Var' ("zero?", Free)),
       [ScmVarGet' (Var' ("n", Param 0))], Non_Tail_Call),
-    ScmConst' (ScmNumber (ScmFraction (1, 1))),
+    ScmConst' (ScmNumber (ScmInteger 1)),
     ScmApplic' (ScmVarGet' (Var' ("cons", Free)),
      [ScmConst' (ScmSymbol "*");
       ScmApplic' (ScmVarGet' (Var' ("cons", Free)),
@@ -1192,7 +1192,7 @@ let quadruples = [
          [ScmApplic' (ScmVarGet' (Var' ("fact", Free)),
            [ScmApplic' (ScmVarGet' (Var' ("-", Free)),
              [ScmVarGet' (Var' ("n", Param 0));
-              ScmConst' (ScmNumber (ScmFraction (1, 1)))],
+              ScmConst' (ScmNumber (ScmInteger 1))],
              Non_Tail_Call)],
            Non_Tail_Call);
           ScmConst' ScmNil],

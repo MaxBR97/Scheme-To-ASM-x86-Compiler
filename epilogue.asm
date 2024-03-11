@@ -422,7 +422,9 @@ print_sexpr:
 	mov rdx, qword [rdi + 1] ; length
 	lea rdi, [rdi + 1 + 8]	 ; actual characters
 	mov rcx, qword [stdout]	 ; FILE *
+	ENTER
 	call fwrite
+	LEAVE
 	jmp .Lend
 
 .Luninterned_symbol:
@@ -1039,6 +1041,38 @@ L_code_ptr_is_boolean:
         leave
         ret AND_KILL_FRAME(1)
         
+L_code_ptr_is_boolean_false:
+        enter 0, 0
+        cmp COUNT, 1
+        jne L_error_arg_count_1
+        mov rax, PARAM(0)
+        mov bl, byte [rax]
+        cmp bl, T_boolean_false
+        jne .L_false
+        mov rax, sob_boolean_true
+        jmp .L_end
+.L_false:
+        mov rax, sob_boolean_false
+.L_end:
+        leave
+        ret AND_KILL_FRAME(1)
+
+L_code_ptr_is_boolean_true:
+        enter 0, 0
+        cmp COUNT, 1
+        jne L_error_arg_count_1
+        mov rax, PARAM(0)
+        mov bl, byte [rax]
+        cmp bl, T_boolean_true
+        jne .L_false
+        mov rax, sob_boolean_true
+        jmp .L_end
+.L_false:
+        mov rax, sob_boolean_false
+.L_end:
+        leave
+        ret AND_KILL_FRAME(1)
+
 L_code_ptr_is_number:
         enter 0, 0
         cmp COUNT, 1
@@ -1615,7 +1649,9 @@ L_code_ptr_error:
         mov rdx, qword [rax + 1] ; length
         lea rdi, [rax + 1 + 8]   ; actual characters
         mov rcx, qword [stdout]  ; FILE*
+	ENTER
         call fwrite
+	LEAVE
         mov rdi, fmt_scheme_error_part_3
         mov rax, 0
         ENTER

@@ -678,7 +678,11 @@ module Tag_Parser : TAG_PARSER = struct
             | ScmPair(test, exps) -> 
               (* ScmPair (ScmSymbol "if", ScmPair (test, ScmPair (exps, ScmPair (macro_expand_cond_ribs rest, ScmNil))))  *)
                 ScmPair (ScmSymbol "if", ScmPair (test, ScmPair (ScmPair(ScmSymbol("begin"), exps), ScmPair (macro_expand_cond_ribs rest, ScmNil)))) 
-              
+              (*(ScmLambda (["value"; "f"; "rest"], Simple,
+      ScmIf (ScmVarGet (Var "value"),
+       ScmApplic (ScmApplic (ScmVarGet (Var "f"), []),
+        [ScmVarGet (Var "value")]),
+       ScmApplic (ScmVarGet (Var "rest"), [])))  *)
     | _ -> failwith "shouldnt happen";;
     (* raise (X_not_yet_implemented "hw 1");; *)
 
@@ -2411,13 +2415,11 @@ let compile= Code_Generation.compile_scheme_string "output";;
 let rec test_quadruple quadruples index = 
   match (quadruples, index) with
   | (q :: rest, 0) ->  (match q with
-      | (r , p , s, c) -> (match (read r) with
-        | p -> (match (Tag_Parser.tag_parse p) with 
-            | s -> (match (Semantic_Analysis.annotate_lexical_address s) with 
-                | c -> 0
-                | _ -> failwith "failed annotating lexical address")
-            | _ -> failwith "failed tag parse")
-        | _ -> failwith "failed read")
+      | (r , p , s, c) -> (if (read r) = p then 
+        (if (Tag_Parser.tag_parse p) = s then 
+            (if (Semantic_Analysis.semantics s) = c then 0 else failwith ("failed semantics: "^ r))
+        else failwith ("failed parse: "^ r))
+                          else failwith ("failed read: "^r))
       | _ -> failwith "shouldnt happen, failed")
       
   | (q :: [], x) -> 1
