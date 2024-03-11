@@ -1,5 +1,5 @@
 let quadruples = [
-  ("a", ScmSymbol "a", ScmVarGet (Var "a"), ScmVarGet' (Var' ("a", Free)))
+  ("ab", ScmSymbol "a", ScmVarGet (Var "a"), ScmVarGet' (Var' ("a", Free)))
 
 ;
 

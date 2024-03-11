@@ -676,7 +676,8 @@ module Tag_Parser : TAG_PARSER = struct
               let ifExp = ScmPair (ScmSymbol "if", ScmPair (ScmSymbol("value"), ScmPair (ScmPair(ScmSymbol("f"),ScmNil), ScmPair (ScmPair(ScmSymbol("rest"),ScmNil), ScmNil)))) in
               ScmPair (ScmSymbol "let", ScmPair (ScmPair(valueAssignment1, ScmPair(valueAssignment2, ScmPair(valueAssignment3, ScmNil))), ScmPair(ifExp ,ScmNil)))
             | ScmPair(test, exps) -> 
-              ScmPair (ScmSymbol "if", ScmPair (test, ScmPair (exps, ScmPair (macro_expand_cond_ribs rest, ScmNil)))) 
+              (* ScmPair (ScmSymbol "if", ScmPair (test, ScmPair (exps, ScmPair (macro_expand_cond_ribs rest, ScmNil))))  *)
+                ScmPair (ScmSymbol "if", ScmPair (test, ScmPair (ScmPair(ScmSymbol("begin"), exps), ScmPair (macro_expand_cond_ribs rest, ScmNil)))) 
               
     | _ -> failwith "shouldnt happen";;
     (* raise (X_not_yet_implemented "hw 1");; *)
@@ -2380,8 +2381,8 @@ module Code_Generation : CODE_GENERATION = struct
     compile_scheme_string file_out (file_to_string file_in);;
  (* to auto-test, call the output file "output" !! *)
   let compile_and_run_scheme_string file_out_base user =
-      (* let init = file_to_string "init.scm"  in  *)
-    let source_code = (* init ^ "\n" ^  *) user in
+      let init = file_to_string "init.scm"  in 
+    let source_code = init ^ "\n" ^  user in
     let sexprs = (PC.star Reader.nt_sexpr source_code 0).found in
     let exprs = List.map Tag_Parser.tag_parse sexprs in
     let exprs' = List.map Semantic_Analysis.semantics exprs in
@@ -2434,6 +2435,5 @@ let rec test_quadruple quadruples index =
        | 1 -> "success"
        | _ -> "fail" in
     run 0
-
   ;;
 
