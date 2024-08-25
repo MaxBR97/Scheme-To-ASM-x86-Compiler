@@ -3,7 +3,7 @@ This project is a compiler for Scheme language which is part of the Lisp languag
 
 The compilation process works according to the following pipeline: 
 
-Scanner -> Parser -> Semantic Analyser -> Code Generator
+# Scanner -> Parser -> Semantic Analyser -> Code Generator
 
 Scanner : Receives source code (text) and outputs tokens
 Parser : Receives ordered tokens and outputs an AST (abstract syntax tree) which is the logical structure of the code
